@@ -46,7 +46,8 @@ Download and install the Arduino IDE from the [official website](https://www.ard
 1. Go to **Sketch > Include Library > Manage Libraries**
 2. Search and install:
    - `Seeed Arduino LIS3DH` by Seeed Studio
-   - `TFT_eSPI` by Bodmer
+
+**IMPORTANT:** Do NOT install the standalone `TFT_eSPI` library. The Wio Terminal board package includes a pre-configured `Seeed_Arduino_LCD` library that is specifically designed for the Wio Terminal. If you have `TFT_eSPI` installed in your Arduino/libraries folder, rename or remove it so the correct library is used.
 
 ### 4. Upload the Code
 
