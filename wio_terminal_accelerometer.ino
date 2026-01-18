@@ -4,9 +4,9 @@
 LIS3DHTR<TwoWire> lis;
 TFT_eSPI tft;
 
-// Acceleration tracking
-float currentAccel = 0.0;
-float peakAccel = 0.0;
+// Speed tracking (MPH)
+float currentSpeed = 0.0;
+float peakSpeed = 0.0;
 
 // Calibration
 float offsetX = 0.0;
@@ -25,7 +25,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  Serial.println("=== Wio Terminal Accelerometer ===");
+  Serial.println("=== Wio Terminal Speedometer ===");
 
   // Turn on backlight
   pinMode(72, OUTPUT);
@@ -36,44 +36,6 @@ void setup() {
   tft.init();
   tft.setRotation(3);
   Serial.println("Display initialized");
-
-  // Fill screen test
-  Serial.println("Testing RED...");
-  tft.fillScreen(TFT_RED);
-  delay(1000);
-
-  Serial.println("Testing GREEN...");
-  tft.fillScreen(TFT_GREEN);
-  delay(1000);
-
-  Serial.println("Testing BLUE...");
-  tft.fillScreen(TFT_BLUE);
-  delay(1000);
-
-  Serial.println("Testing WHITE...");
-  tft.fillScreen(TFT_WHITE);
-  delay(1000);
-
-  tft.fillScreen(TFT_BLACK);
-  Serial.println("Color test done - Did you see the colors?");
-
-  delay(1000);
-
-  // Draw text test
-  tft.setTextColor(TFT_WHITE);
-  tft.setTextSize(3);
-  tft.setCursor(50, 50);
-  tft.print("WIO TERMINAL");
-
-  tft.setTextSize(2);
-  tft.setTextColor(TFT_YELLOW);
-  tft.setCursor(50, 100);
-  tft.print("Accelerometer");
-
-  Serial.println("Text drawn - Do you see it?");
-  delay(3000);
-
-  Serial.println("Initializing accelerometer...");
 
   // Initialize accelerometer
   lis.begin(Wire1);
@@ -130,7 +92,7 @@ void loop() {
   float az = lis.getAccelerationZ() - offsetZ - 1.0;
 
   float mag = sqrt(ax*ax + ay*ay + az*az);
-  float accel = mag * 9.81;
+  float accel = mag * 9.81; // m/s²
 
   if (accel < NOISE_THRESHOLD) {
     accel = 0.0;
@@ -141,11 +103,16 @@ void loop() {
   readings[readIndex] = accel;
   total = total + readings[readIndex];
   readIndex = (readIndex + 1) % numReadings;
-  currentAccel = total / numReadings;
+
+  float currentAccel = total / numReadings;
+
+  // Convert m/s² to MPH (approximate instantaneous speed change)
+  // MPH = m/s² * 2.23694 (converting m/s to MPH)
+  currentSpeed = currentAccel * 2.23694;
 
   // Update peak
-  if (currentAccel > peakAccel) {
-    peakAccel = currentAccel;
+  if (currentSpeed > peakSpeed) {
+    peakSpeed = currentSpeed;
   }
 
   // Display
@@ -153,10 +120,10 @@ void loop() {
 
   // Serial
   Serial.print("Current: ");
-  Serial.print(currentAccel, 2);
-  Serial.print(" m/s² | Peak: ");
-  Serial.print(peakAccel, 2);
-  Serial.println(" m/s²");
+  Serial.print(currentSpeed, 2);
+  Serial.print(" MPH | Peak: ");
+  Serial.print(peakSpeed, 2);
+  Serial.println(" MPH");
 
   delay(100);
 }
@@ -181,7 +148,7 @@ void calibrate() {
 void drawScreen() {
   tft.fillScreen(TFT_BLACK);
 
-  // Current
+  // Current Speed
   tft.setTextSize(2);
   tft.setTextColor(TFT_CYAN);
   tft.setCursor(10, 30);
@@ -190,11 +157,11 @@ void drawScreen() {
   tft.setTextSize(4);
   tft.setTextColor(TFT_GREEN);
   tft.setCursor(10, 60);
-  tft.print(currentAccel, 1);
+  tft.print(currentSpeed, 1);
   tft.setTextSize(2);
-  tft.print(" m/s2");
+  tft.print(" MPH");
 
-  // Peak
+  // Peak Speed
   tft.setTextSize(2);
   tft.setTextColor(TFT_YELLOW);
   tft.setCursor(10, 120);
@@ -203,9 +170,9 @@ void drawScreen() {
   tft.setTextSize(4);
   tft.setTextColor(TFT_RED);
   tft.setCursor(10, 150);
-  tft.print(peakAccel, 1);
+  tft.print(peakSpeed, 1);
   tft.setTextSize(2);
-  tft.print(" m/s2");
+  tft.print(" MPH");
 
   // Info
   tft.setTextSize(1);
