@@ -1,196 +1,206 @@
 #include <LIS3DHTR.h>
-#include <TFT_eSPI.h>
+#include "TFT_eSPI.h"
 
 LIS3DHTR<TwoWire> lis;
 TFT_eSPI tft;
 
-// Acceleration tracking variables
+// Acceleration tracking
 float currentAccel = 0.0;
 float peakAccel = 0.0;
 
-// Calibration offsets
+// Calibration
 float offsetX = 0.0;
 float offsetY = 0.0;
 float offsetZ = 0.0;
 
-// Smoothing filter
+// Smoothing
 const int numReadings = 10;
 float readings[numReadings];
 int readIndex = 0;
 float total = 0.0;
 
-// Noise threshold (m/s²)
 const float NOISE_THRESHOLD = 0.5;
 
 void setup() {
   Serial.begin(115200);
+  delay(1000);
 
-  // Initialize LCD
-  tft.begin();
+  Serial.println("=== Wio Terminal Accelerometer ===");
+
+  // Turn on backlight first
+  pinMode(LCD_BACKLIGHT, OUTPUT);
+  digitalWrite(LCD_BACKLIGHT, HIGH);
+
+  Serial.println("Backlight ON");
+
+  // Initialize display
+  tft.init();
   tft.setRotation(3);
   tft.fillScreen(TFT_BLACK);
+
+  Serial.println("Display initialized");
+
+  // Test colors
+  tft.fillScreen(TFT_RED);
+  delay(500);
+  tft.fillScreen(TFT_GREEN);
+  delay(500);
+  tft.fillScreen(TFT_BLUE);
+  delay(500);
+  tft.fillScreen(TFT_BLACK);
+
+  Serial.println("Color test done - did you see RED, GREEN, BLUE?");
+
+  // Test text
   tft.setTextColor(TFT_WHITE);
+  tft.setTextSize(3);
+  tft.setCursor(50, 50);
+  tft.print("WIO TERMINAL");
+
   tft.setTextSize(2);
+  tft.setTextColor(TFT_YELLOW);
+  tft.setCursor(50, 100);
+  tft.print("Accelerometer");
+
+  delay(2000);
+
+  Serial.println("Initializing accelerometer...");
 
   // Initialize accelerometer
   lis.begin(Wire1);
 
   if (!lis) {
-    tft.setCursor(10, 10);
+    Serial.println("ERROR: Accelerometer not found!");
+    tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_RED);
-    tft.println("ERROR:");
-    tft.setCursor(10, 40);
-    tft.println("Accelerometer");
-    tft.setCursor(10, 70);
-    tft.println("not found!");
-    while (1) {
-      delay(1000);
-    }
+    tft.setTextSize(3);
+    tft.setCursor(20, 100);
+    tft.print("SENSOR ERROR!");
+    while (1) delay(1000);
   }
 
-  // Configure accelerometer
+  Serial.println("Accelerometer OK!");
+
   lis.setOutputDataRate(LIS3DHTR_DATARATE_100HZ);
   lis.setFullScaleRange(LIS3DHTR_RANGE_2G);
 
-  // Display calibration instructions
-  tft.setCursor(10, 10);
+  // Calibration
+  tft.fillScreen(TFT_BLACK);
   tft.setTextColor(TFT_CYAN);
-  tft.println("Calibrating...");
-  tft.setCursor(10, 40);
-  tft.setTextColor(TFT_YELLOW);
-  tft.println("Keep device still");
-  tft.setCursor(10, 70);
-  tft.println("on flat surface");
+  tft.setTextSize(2);
+  tft.setCursor(20, 60);
+  tft.print("Calibrating...");
+  tft.setCursor(20, 100);
+  tft.print("Keep still!");
 
-  // Calibrate - measure offset when stationary
+  Serial.println("Calibrating...");
   delay(1500);
-  calibrateAccelerometer();
 
-  // Initialize smoothing array
+  calibrate();
+
+  // Initialize smoothing
   for (int i = 0; i < numReadings; i++) {
     readings[i] = 0.0;
   }
 
-  // Clear screen and show ready message
+  // Ready
   tft.fillScreen(TFT_BLACK);
-  tft.setCursor(80, 100);
   tft.setTextColor(TFT_GREEN);
-  tft.setTextSize(3);
-  tft.println("READY!");
-  delay(1000);
-  tft.fillScreen(TFT_BLACK);
+  tft.setTextSize(4);
+  tft.setCursor(60, 100);
+  tft.print("READY!");
 
-  Serial.println("Accelerometer initialized and calibrated");
+  Serial.println("READY!");
+  delay(1500);
 }
 
 void loop() {
-  // Read raw acceleration values (in g's)
-  float accelX = lis.getAccelerationX() - offsetX;
-  float accelY = lis.getAccelerationY() - offsetY;
-  float accelZ = lis.getAccelerationZ() - offsetZ - 1.0; // Remove gravity component
+  // Read accelerometer
+  float ax = lis.getAccelerationX() - offsetX;
+  float ay = lis.getAccelerationY() - offsetY;
+  float az = lis.getAccelerationZ() - offsetZ - 1.0;
 
-  // Calculate total acceleration magnitude
-  float accelMagnitude = sqrt(accelX * accelX +
-                               accelY * accelY +
-                               accelZ * accelZ);
+  float mag = sqrt(ax*ax + ay*ay + az*az);
+  float accel = mag * 9.81;
 
-  // Convert from g's to m/s²
-  float accelMS2 = accelMagnitude * 9.81;
-
-  // Apply noise threshold filter
-  if (accelMS2 < NOISE_THRESHOLD) {
-    accelMS2 = 0.0;
+  if (accel < NOISE_THRESHOLD) {
+    accel = 0.0;
   }
 
-  // Apply smoothing filter
+  // Smooth
   total = total - readings[readIndex];
-  readings[readIndex] = accelMS2;
+  readings[readIndex] = accel;
   total = total + readings[readIndex];
   readIndex = (readIndex + 1) % numReadings;
-
   currentAccel = total / numReadings;
 
-  // Update peak acceleration
+  // Update peak
   if (currentAccel > peakAccel) {
     peakAccel = currentAccel;
   }
 
-  // Update display
-  updateDisplay();
+  // Display
+  drawScreen();
 
-  // Print to Serial Monitor
+  // Serial
   Serial.print("Current: ");
   Serial.print(currentAccel, 2);
   Serial.print(" m/s² | Peak: ");
   Serial.print(peakAccel, 2);
   Serial.println(" m/s²");
 
-  delay(50); // Update rate: 20Hz
+  delay(100);
 }
 
-void calibrateAccelerometer() {
-  float sumX = 0.0, sumY = 0.0, sumZ = 0.0;
-  const int calibrationSamples = 100;
+void calibrate() {
+  float sumX = 0, sumY = 0, sumZ = 0;
 
-  for (int i = 0; i < calibrationSamples; i++) {
+  for (int i = 0; i < 100; i++) {
     sumX += lis.getAccelerationX();
     sumY += lis.getAccelerationY();
     sumZ += lis.getAccelerationZ();
     delay(10);
   }
 
-  offsetX = sumX / calibrationSamples;
-  offsetY = sumY / calibrationSamples;
-  offsetZ = sumZ / calibrationSamples - 1.0; // Subtract 1g for gravity
+  offsetX = sumX / 100.0;
+  offsetY = sumY / 100.0;
+  offsetZ = sumZ / 100.0 - 1.0;
 
-  Serial.println("Calibration complete:");
-  Serial.print("  Offset X: "); Serial.println(offsetX, 4);
-  Serial.print("  Offset Y: "); Serial.println(offsetY, 4);
-  Serial.print("  Offset Z: "); Serial.println(offsetZ, 4);
+  Serial.println("Calibration complete");
 }
 
-void updateDisplay() {
+void drawScreen() {
   tft.fillScreen(TFT_BLACK);
 
-  // Current acceleration section
+  // Current
   tft.setTextSize(2);
   tft.setTextColor(TFT_CYAN);
-  tft.setCursor(10, 20);
-  tft.println("Current Accel:");
+  tft.setCursor(10, 30);
+  tft.print("Current:");
 
   tft.setTextSize(4);
   tft.setTextColor(TFT_GREEN);
-  tft.setCursor(10, 50);
-  tft.print(currentAccel, 2);
-
+  tft.setCursor(10, 60);
+  tft.print(currentAccel, 1);
   tft.setTextSize(2);
-  tft.setCursor(180, 70);
-  tft.println("m/s");
-  tft.setCursor(240, 65);
-  tft.setTextSize(1);
-  tft.println("2");
+  tft.print(" m/s2");
 
-  // Peak acceleration section
+  // Peak
   tft.setTextSize(2);
   tft.setTextColor(TFT_YELLOW);
-  tft.setCursor(10, 110);
-  tft.println("Peak Accel:");
+  tft.setCursor(10, 120);
+  tft.print("Peak:");
 
   tft.setTextSize(4);
   tft.setTextColor(TFT_RED);
-  tft.setCursor(10, 140);
-  tft.print(peakAccel, 2);
-
+  tft.setCursor(10, 150);
+  tft.print(peakAccel, 1);
   tft.setTextSize(2);
-  tft.setCursor(180, 160);
-  tft.println("m/s");
-  tft.setCursor(240, 155);
-  tft.setTextSize(1);
-  tft.println("2");
+  tft.print(" m/s2");
 
-  // Instructions
+  // Info
   tft.setTextSize(1);
   tft.setTextColor(TFT_WHITE);
-  tft.setCursor(10, 210);
-  tft.println("Press RESET button to clear peak");
+  tft.setCursor(10, 220);
+  tft.print("Press RESET to clear peak");
 }
