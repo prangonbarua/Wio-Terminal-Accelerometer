@@ -27,31 +27,38 @@ void setup() {
 
   Serial.println("=== Wio Terminal Accelerometer ===");
 
-  // Turn on backlight first
+  // Turn on backlight
   pinMode(LCD_BACKLIGHT, OUTPUT);
   digitalWrite(LCD_BACKLIGHT, HIGH);
-
   Serial.println("Backlight ON");
 
-  // Initialize display
-  tft.init();
+  // Initialize display with begin() instead of init()
+  tft.begin();
   tft.setRotation(3);
-  tft.fillScreen(TFT_BLACK);
 
-  Serial.println("Display initialized");
-
-  // Test colors
+  // Fill screen test
+  Serial.println("Testing RED...");
   tft.fillScreen(TFT_RED);
-  delay(500);
+  delay(1000);
+
+  Serial.println("Testing GREEN...");
   tft.fillScreen(TFT_GREEN);
-  delay(500);
+  delay(1000);
+
+  Serial.println("Testing BLUE...");
   tft.fillScreen(TFT_BLUE);
-  delay(500);
+  delay(1000);
+
+  Serial.println("Testing WHITE...");
+  tft.fillScreen(TFT_WHITE);
+  delay(1000);
+
   tft.fillScreen(TFT_BLACK);
+  Serial.println("Color test done - Did you see the colors?");
 
-  Serial.println("Color test done - did you see RED, GREEN, BLUE?");
+  delay(1000);
 
-  // Test text
+  // Draw text test
   tft.setTextColor(TFT_WHITE);
   tft.setTextSize(3);
   tft.setCursor(50, 50);
@@ -62,7 +69,8 @@ void setup() {
   tft.setCursor(50, 100);
   tft.print("Accelerometer");
 
-  delay(2000);
+  Serial.println("Text drawn - Do you see it?");
+  delay(3000);
 
   Serial.println("Initializing accelerometer...");
 
