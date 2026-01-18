@@ -28,13 +28,14 @@ void setup() {
   Serial.println("=== Wio Terminal Accelerometer ===");
 
   // Turn on backlight
-  pinMode(LCD_BACKLIGHT, OUTPUT);
-  digitalWrite(LCD_BACKLIGHT, HIGH);
+  pinMode(72, OUTPUT);
+  digitalWrite(72, HIGH);
   Serial.println("Backlight ON");
 
-  // Initialize display with begin() instead of init()
-  tft.begin();
+  // Initialize display
+  tft.init();
   tft.setRotation(3);
+  Serial.println("Display initialized");
 
   // Fill screen test
   Serial.println("Testing RED...");
