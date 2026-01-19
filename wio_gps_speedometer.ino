@@ -1,14 +1,8 @@
-#include <LIS3DHTR.h>
 #include "TFT_eSPI.h"
 #include <TinyGPS++.h>
 
-LIS3DHTR<TwoWire> lis;
 TFT_eSPI tft;
 TinyGPSPlus gps;
-
-// Mode tracking
-enum Mode { SPEEDOMETER, BILLBOARD };
-Mode currentMode = SPEEDOMETER;
 
 // Speed tracking (MPH)
 float currentSpeed = 0.0;
@@ -29,12 +23,7 @@ double lastLat = 0.0;
 double lastLon = 0.0;
 bool tripStarted = false;
 
-// Billboard data (hardcoded until WiFi module)
-String currentSong = "APT.";
-String currentArtist = "ROSE & Bruno Mars";
-
 // Button pins
-const int BUTTON_TOP = WIO_KEY_A;    // Top button - switch modes
 const int BUTTON_MID = WIO_KEY_B;    // Middle button - reset peak
 const int BUTTON_BOT = WIO_KEY_C;    // Bottom button - reset trip
 
@@ -50,7 +39,6 @@ void setup() {
   Serial.println("=== Wio Terminal GPS Speedometer ===");
 
   // Setup buttons
-  pinMode(BUTTON_TOP, INPUT_PULLUP);
   pinMode(BUTTON_MID, INPUT_PULLUP);
   pinMode(BUTTON_BOT, INPUT_PULLUP);
 
@@ -66,27 +54,15 @@ void setup() {
   // Splash screen
   tft.setTextColor(TFT_CYAN);
   tft.setTextSize(3);
-  tft.setCursor(30, 60);
-  tft.print("GPS SPEEDO");
+  tft.setCursor(20, 80);
+  tft.print("GPS SPEEDOMETER");
   tft.setTextSize(2);
-  tft.setTextColor(TFT_WHITE);
-  tft.setCursor(30, 100);
-  tft.print("+ Billboard Hot 100");
-  tft.setTextSize(1);
   tft.setTextColor(TFT_YELLOW);
-  tft.setCursor(30, 140);
-  tft.print("Waiting for GPS signal...");
+  tft.setCursor(20, 130);
+  tft.print("Waiting for GPS...");
   delay(2000);
 
-  // Initialize accelerometer (backup)
-  lis.begin(Wire1);
-  if (lis) {
-    lis.setOutputDataRate(LIS3DHTR_DATARATE_100HZ);
-    lis.setFullScaleRange(LIS3DHTR_RANGE_2G);
-    Serial.println("Accelerometer ready (backup)");
-  }
-
-  Serial.println("Waiting for GPS...");
+  Serial.println("Waiting for GPS signal...");
   tft.fillScreen(TFT_BLACK);
 }
 
@@ -106,23 +82,12 @@ void loop() {
     // Update GPS data
     updateGPSData();
 
-    // Display based on mode
-    if (currentMode == SPEEDOMETER) {
-      drawSpeedometerScreen();
-    } else {
-      drawBillboardScreen();
-    }
+    // Draw speedometer
+    drawSpeedometerScreen();
   }
 }
 
 void checkButtons() {
-  // TOP button - switch modes
-  if (digitalRead(BUTTON_TOP) == LOW) {
-    delay(200);
-    switchMode();
-    while (digitalRead(BUTTON_TOP) == LOW); // Wait for release
-  }
-
   // MIDDLE button - reset peak speed
   if (digitalRead(BUTTON_MID) == LOW) {
     delay(200);
@@ -142,17 +107,6 @@ void checkButtons() {
     Serial.println("Trip reset");
     while (digitalRead(BUTTON_BOT) == LOW);
   }
-}
-
-void switchMode() {
-  if (currentMode == SPEEDOMETER) {
-    currentMode = BILLBOARD;
-    Serial.println("Mode: Billboard Hot 100");
-  } else {
-    currentMode = SPEEDOMETER;
-    Serial.println("Mode: Speedometer");
-  }
-  tft.fillScreen(TFT_BLACK);
 }
 
 void updateGPSData() {
@@ -198,33 +152,28 @@ void updateGPSData() {
 void drawSpeedometerScreen() {
   tft.fillScreen(TFT_BLACK);
 
-  // Mode indicator
-  tft.setTextSize(1);
-  tft.setTextColor(TFT_DARKGREY);
-  tft.setCursor(5, 5);
-  tft.print("GPS SPEEDOMETER");
-
   // GPS status
-  tft.setCursor(220, 5);
+  tft.setTextSize(1);
+  tft.setCursor(5, 5);
   if (gpsValid) {
     tft.setTextColor(TFT_GREEN);
-    tft.print("GPS OK ");
+    tft.print("GPS LOCKED ");
   } else {
     tft.setTextColor(TFT_RED);
-    tft.print("NO GPS ");
+    tft.print("SEARCHING ");
   }
   tft.setTextColor(TFT_CYAN);
   tft.print(satellites);
-  tft.print(" SAT");
+  tft.print(" SATELLITES");
 
   // Current speed - BIG
-  tft.setTextSize(6);
+  tft.setTextSize(7);
   if (currentSpeed < 10) {
-    tft.setCursor(80, 40);
+    tft.setCursor(100, 35);
   } else if (currentSpeed < 100) {
-    tft.setCursor(50, 40);
+    tft.setCursor(70, 35);
   } else {
-    tft.setCursor(20, 40);
+    tft.setCursor(40, 35);
   }
 
   // Color based on speed
@@ -237,13 +186,20 @@ void drawSpeedometerScreen() {
   }
 
   tft.print(currentSpeed, 0);
+
+  // MPH label
   tft.setTextSize(3);
-  tft.print(" MPH");
+  tft.setTextColor(TFT_WHITE);
+  tft.setCursor(230, 60);
+  tft.print("MPH");
+
+  // Divider line
+  tft.drawLine(10, 105, 310, 105, TFT_DARKGREY);
 
   // Peak speed
   tft.setTextSize(2);
   tft.setTextColor(TFT_YELLOW);
-  tft.setCursor(10, 110);
+  tft.setCursor(10, 115);
   tft.print("Peak: ");
   tft.setTextColor(TFT_RED);
   tft.print(peakSpeed, 1);
@@ -251,14 +207,14 @@ void drawSpeedometerScreen() {
 
   // Average speed
   tft.setTextColor(TFT_CYAN);
-  tft.setCursor(10, 135);
+  tft.setCursor(10, 140);
   tft.print("Avg:  ");
   tft.print(avgSpeed, 1);
   tft.print(" MPH");
 
   // Trip distance
   tft.setTextColor(TFT_MAGENTA);
-  tft.setCursor(10, 160);
+  tft.setCursor(10, 165);
   tft.print("Trip: ");
   tft.print(tripDistance, 2);
   tft.print(" mi");
@@ -267,10 +223,10 @@ void drawSpeedometerScreen() {
   if (gpsValid) {
     tft.setTextSize(1);
     tft.setTextColor(TFT_DARKGREY);
-    tft.setCursor(10, 190);
+    tft.setCursor(180, 115);
     tft.print("LAT: ");
     tft.print(latitude, 5);
-    tft.setCursor(10, 202);
+    tft.setCursor(180, 127);
     tft.print("LON: ");
     tft.print(longitude, 5);
   }
@@ -279,77 +235,5 @@ void drawSpeedometerScreen() {
   tft.setTextSize(1);
   tft.setTextColor(TFT_WHITE);
   tft.setCursor(10, 220);
-  tft.print("[A]Mode [B]Reset Peak [C]Reset Trip");
-}
-
-void drawBillboardScreen() {
-  tft.fillScreen(TFT_BLACK);
-
-  // Mode indicator
-  tft.setTextSize(1);
-  tft.setTextColor(TFT_DARKGREY);
-  tft.setCursor(5, 5);
-  tft.print("BILLBOARD HOT 100");
-
-  // Title
-  tft.setTextSize(2);
-  tft.setTextColor(TFT_YELLOW);
-  tft.setCursor(10, 30);
-  tft.print("#1 This Week");
-
-  // Decorative line
-  tft.drawLine(10, 55, 310, 55, TFT_YELLOW);
-
-  // Song name - big
-  tft.setTextSize(3);
-  tft.setTextColor(TFT_GREEN);
-  tft.setCursor(10, 70);
-
-  // Handle long song names
-  if (currentSong.length() > 12) {
-    tft.print(currentSong.substring(0, 12));
-    tft.setTextSize(2);
-    tft.setCursor(10, 100);
-    tft.print(currentSong.substring(12));
-  } else {
-    tft.print(currentSong);
-  }
-
-  // Artist name
-  tft.setTextSize(2);
-  tft.setTextColor(TFT_CYAN);
-  tft.setCursor(10, 130);
-  tft.print("by ");
-  tft.setTextColor(TFT_WHITE);
-
-  if (currentArtist.length() > 20) {
-    tft.print(currentArtist.substring(0, 20));
-    tft.setCursor(10, 155);
-    tft.print(currentArtist.substring(20));
-  } else {
-    tft.print(currentArtist);
-  }
-
-  // Decorative music notes
-  tft.setTextSize(3);
-  tft.setTextColor(TFT_MAGENTA);
-  tft.setCursor(260, 70);
-  tft.print("~");
-  tft.setCursor(280, 90);
-  tft.print("~");
-
-  // Chart icon
-  tft.drawRect(250, 130, 60, 60, TFT_WHITE);
-  tft.setTextSize(1);
-  tft.setTextColor(TFT_YELLOW);
-  tft.setCursor(265, 155);
-  tft.print("HOT");
-  tft.setCursor(265, 165);
-  tft.print("100");
-
-  // Button hint
-  tft.setTextSize(1);
-  tft.setTextColor(TFT_WHITE);
-  tft.setCursor(10, 220);
-  tft.print("[A] Switch to Speedometer");
+  tft.print("[B] Reset Peak/Avg    [C] Reset Trip");
 }
