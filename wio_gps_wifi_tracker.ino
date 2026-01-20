@@ -14,10 +14,10 @@ TinyGPSPlus gps;
 // ============================================
 // CONFIGURE THESE SETTINGS
 // ============================================
-const char* ssid = "YOUR_WIFI_SSID";           // Your WiFi name
-const char* password = "YOUR_WIFI_PASSWORD";   // Your WiFi password
-const char* serverURL = "http://YOUR_COMPUTER_IP:5002/api/gps/update";  // Server URL
-const char* deviceId = "wio_default";          // Device identifier
+const char* ssid = "WifiPrajoy";
+const char* password = "S09273788";
+const char* serverURL = "http://10.0.0.93:5002/api/gps/update";
+const char* deviceId = "wio_default";
 // ============================================
 
 // Modes
