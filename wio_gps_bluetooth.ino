@@ -1,29 +1,13 @@
-// Wio Terminal GPS Bluetooth Tracker
-// Sends GPS data to phone via Bluetooth Serial
-// View data on any Bluetooth Serial app on your phone
+// Wio Terminal GPS Tracker with USB Serial Output
+// Connect Wio Terminal to phone/computer via USB
+// Use Serial Monitor or any serial app to view GPS data
 // Press TOP button to switch between Speedometer/Stats modes
-
-// Fix for min/max macro conflict
-#undef min
-#undef max
 
 #include "TFT_eSPI.h"
 #include <TinyGPS++.h>
-#include <rpcBLEDevice.h>
-#include <BLEServer.h>
-#include <BLE2902.h>
 
 TFT_eSPI tft;
 TinyGPSPlus gps;
-
-// BLE UUIDs
-#define SERVICE_UUID        "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
-#define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
-
-BLEServer *pServer = NULL;
-BLECharacteristic *pTxCharacteristic;
-bool deviceConnected = false;
-bool oldDeviceConnected = false;
 
 // Modes
 enum Mode { SPEEDOMETER, STATS };
@@ -58,28 +42,16 @@ const int BUTTON_BOT = WIO_KEY_C;
 // Timing
 unsigned long lastUpdate = 0;
 const int UPDATE_INTERVAL = 200;
-unsigned long lastBLESend = 0;
-const int BLE_SEND_INTERVAL = 1000;  // Send data every 1 second
-
-// BLE connection callback
-class MyServerCallbacks: public BLEServerCallbacks {
-    void onConnect(BLEServer* pServer) {
-      deviceConnected = true;
-      Serial.println("BLE Connected!");
-    };
-
-    void onDisconnect(BLEServer* pServer) {
-      deviceConnected = false;
-      Serial.println("BLE Disconnected!");
-    }
-};
+unsigned long lastSerialSend = 0;
+const int SERIAL_SEND_INTERVAL = 1000;  // Send data every 1 second
 
 void setup() {
   Serial.begin(115200);
   Serial1.begin(9600);
   delay(1000);
 
-  Serial.println("=== Wio GPS Bluetooth Tracker ===");
+  Serial.println("=== Wio GPS Tracker ===");
+  Serial.println("Format: LAT,LON,SPEED_MPH,ALT_FT,SATELLITES");
 
   // Setup buttons
   pinMode(BUTTON_TOP, INPUT_PULLUP);
@@ -98,77 +70,30 @@ void setup() {
   // Splash screen
   tft.setTextColor(TFT_CYAN);
   tft.setTextSize(2);
-  tft.setCursor(10, 40);
-  tft.print("GPS Bluetooth Tracker");
+  tft.setCursor(30, 50);
+  tft.print("GPS Tracker");
 
   tft.setTextSize(1);
   tft.setTextColor(TFT_WHITE);
-  tft.setCursor(10, 80);
-  tft.print("Starting Bluetooth...");
+  tft.setCursor(30, 90);
+  tft.print("GPS data streams via USB Serial");
+  tft.setCursor(30, 110);
+  tft.print("Open Serial Monitor to view");
 
-  // Initialize BLE
-  setupBLE();
-
-  tft.setCursor(10, 100);
   tft.setTextColor(TFT_GREEN);
-  tft.print("BLE Ready: WioGPS");
-
-  tft.setCursor(10, 120);
-  tft.setTextColor(TFT_YELLOW);
-  tft.print("Connect with Serial Bluetooth app");
-
-  tft.setCursor(10, 150);
-  tft.setTextColor(TFT_WHITE);
+  tft.setCursor(30, 140);
   tft.print("Waiting for GPS...");
 
-  delay(3000);
+  delay(2500);
   tft.fillScreen(TFT_BLACK);
 
   tripStartTime = millis();
-}
-
-void setupBLE() {
-  BLEDevice::init("WioGPS");
-
-  pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
-
-  BLEService *pService = pServer->createService(SERVICE_UUID);
-
-  pTxCharacteristic = pService->createCharacteristic(
-    CHARACTERISTIC_UUID_TX,
-    BLECharacteristic::PROPERTY_NOTIFY
-  );
-
-  pTxCharacteristic->addDescriptor(new BLE2902());
-
-  pService->start();
-
-  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-  pAdvertising->addServiceUUID(SERVICE_UUID);
-  pAdvertising->setScanResponse(true);
-  pAdvertising->setMinPreferred(0x06);
-  pAdvertising->setMinPreferred(0x12);
-  BLEDevice::startAdvertising();
-
-  Serial.println("BLE Started - Name: WioGPS");
 }
 
 void loop() {
   // Read GPS data
   while (Serial1.available() > 0) {
     gps.encode(Serial1.read());
-  }
-
-  // Handle BLE reconnection
-  if (!deviceConnected && oldDeviceConnected) {
-    delay(500);
-    pServer->startAdvertising();
-    Serial.println("Restarting BLE advertising");
-    oldDeviceConnected = deviceConnected;
-  }
-  if (deviceConnected && !oldDeviceConnected) {
-    oldDeviceConnected = deviceConnected;
   }
 
   // Check buttons
@@ -186,26 +111,24 @@ void loop() {
     }
   }
 
-  // Send data via BLE
-  if (deviceConnected && gpsValid && (millis() - lastBLESend >= BLE_SEND_INTERVAL)) {
-    sendBLEData();
-    lastBLESend = millis();
+  // Send data via Serial
+  if (gpsValid && (millis() - lastSerialSend >= SERIAL_SEND_INTERVAL)) {
+    sendSerialData();
+    lastSerialSend = millis();
   }
 }
 
-void sendBLEData() {
+void sendSerialData() {
   // Format: LAT,LON,SPEED,ALT,SAT
-  String data = String(latitude, 6) + "," +
-                String(longitude, 6) + "," +
-                String(currentSpeed, 1) + "," +
-                String(altitude * 3.28084, 0) + "," +
-                String(satellites) + "\n";
-
-  pTxCharacteristic->setValue(data.c_str());
-  pTxCharacteristic->notify();
-
-  Serial.print("BLE Sent: ");
-  Serial.print(data);
+  Serial.print(latitude, 6);
+  Serial.print(",");
+  Serial.print(longitude, 6);
+  Serial.print(",");
+  Serial.print(currentSpeed, 1);
+  Serial.print(",");
+  Serial.print(altitude * 3.28084, 0);
+  Serial.print(",");
+  Serial.println(satellites);
 }
 
 void checkButtons() {
@@ -291,16 +214,8 @@ void drawSpeedometerScreen() {
   tft.setCursor(5, 5);
   tft.print("SPEEDOMETER");
 
-  // BLE & GPS status
-  tft.setCursor(160, 5);
-  if (deviceConnected) {
-    tft.setTextColor(TFT_BLUE);
-    tft.print("BLE OK ");
-  } else {
-    tft.setTextColor(TFT_DARKGREY);
-    tft.print("BLE -- ");
-  }
-
+  // GPS status
+  tft.setCursor(200, 5);
   if (gpsValid) {
     tft.setTextColor(TFT_GREEN);
     tft.print("GPS ");
@@ -310,6 +225,7 @@ void drawSpeedometerScreen() {
   }
   tft.setTextColor(TFT_CYAN);
   tft.print(satellites);
+  tft.print(" SAT");
 
   // Current speed - BIG
   tft.setTextSize(7);
@@ -375,10 +291,10 @@ void drawSpeedometerScreen() {
   tft.setCursor(5, 205);
   tft.print("[A] Stats  [B] Reset Peak  [C] Reset All");
 
-  // BLE hint
-  tft.setTextColor(TFT_BLUE);
+  // Serial hint
+  tft.setTextColor(TFT_DARKGREY);
   tft.setCursor(5, 220);
-  tft.print("Bluetooth: WioGPS");
+  tft.print("Data streaming via USB Serial");
 }
 
 void drawStatsScreen() {
@@ -390,16 +306,8 @@ void drawStatsScreen() {
   tft.setCursor(5, 5);
   tft.print("TRIP STATS");
 
-  // BLE & GPS status
-  tft.setCursor(160, 5);
-  if (deviceConnected) {
-    tft.setTextColor(TFT_BLUE);
-    tft.print("BLE OK ");
-  } else {
-    tft.setTextColor(TFT_DARKGREY);
-    tft.print("BLE -- ");
-  }
-
+  // GPS status
+  tft.setCursor(200, 5);
   if (gpsValid) {
     tft.setTextColor(TFT_GREEN);
     tft.print("GPS ");
@@ -409,6 +317,7 @@ void drawStatsScreen() {
   }
   tft.setTextColor(TFT_CYAN);
   tft.print(satellites);
+  tft.print(" SAT");
 
   // Title
   tft.setTextSize(2);
