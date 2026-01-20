@@ -5,7 +5,7 @@
 
 #include "TFT_eSPI.h"
 #include <TinyGPS++.h>
-#include <WiFi.h>
+#include <rpcWiFi.h>
 #include <HTTPClient.h>
 
 TFT_eSPI tft;
@@ -14,8 +14,8 @@ TinyGPSPlus gps;
 // ============================================
 // CONFIGURE THESE SETTINGS
 // ============================================
-const char* ssid = "WifiPrajoy";
-const char* password = "S09273788";
+const char* ssid = "iPhone";
+const char* password = "123456789";
 const char* serverURL = "http://10.0.0.93:5002/api/gps/update";
 const char* deviceId = "wio_default";
 // ============================================
