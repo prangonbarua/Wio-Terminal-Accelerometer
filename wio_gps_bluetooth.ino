@@ -3,6 +3,10 @@
 // View data on any Bluetooth Serial app on your phone
 // Press TOP button to switch between Speedometer/Stats modes
 
+// Fix for min/max macro conflict
+#undef min
+#undef max
+
 #include "TFT_eSPI.h"
 #include <TinyGPS++.h>
 #include <rpcBLEDevice.h>
