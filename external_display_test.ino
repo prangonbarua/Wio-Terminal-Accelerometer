@@ -1,60 +1,59 @@
 // External 3.5" ILI9488 Display Test for Wio Terminal
-// Tests the external SPI display
+// Using Arduino_GFX library
 
-#include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_ILI9341.h>  // Works for ILI9488 too
+#include <Arduino_GFX_Library.h>
 
 // Pin definitions for external display
-#define TFT_CS     10  // Pin 13 on Wio header (D10)
-#define TFT_RST    9   // Pin 15 on Wio header (D9)
-#define TFT_DC     8   // Pin 17 on Wio header (D8)
+#define TFT_CS   10  // Pin 13 on Wio header
+#define TFT_DC   8   // Pin 17 on Wio header
+#define TFT_RST  9   // Pin 15 on Wio header
 
-// Create display object
-Adafruit_ILI9341 tft_ext = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
+// Create display - ILI9488 480x320
+Arduino_DataBus *bus = new Arduino_HWSPI(TFT_DC, TFT_CS);
+Arduino_GFX *gfx = new Arduino_ILI9488_18bit(bus, TFT_RST, 1 /* rotation */);
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("External Display Test");
+  Serial.println("External Display Test - ILI9488");
 
-  // Initialize external display
-  tft_ext.begin();
-  tft_ext.setRotation(1);  // Landscape
-  tft_ext.fillScreen(ILI9341_BLACK);
+  // Initialize display
+  if (!gfx->begin()) {
+    Serial.println("Display init FAILED!");
+    while (1);
+  }
+  Serial.println("Display init OK!");
 
-  // Draw test pattern
-  tft_ext.setTextColor(ILI9341_WHITE);
-  tft_ext.setTextSize(3);
-  tft_ext.setCursor(50, 50);
-  tft_ext.println("DISPLAY OK!");
+  // Clear screen
+  gfx->fillScreen(BLACK);
 
-  tft_ext.setTextSize(2);
-  tft_ext.setTextColor(ILI9341_GREEN);
-  tft_ext.setCursor(50, 120);
-  tft_ext.println("External 3.5\" TFT");
+  // Draw test
+  gfx->setTextColor(WHITE);
+  gfx->setTextSize(4);
+  gfx->setCursor(50, 50);
+  gfx->println("DISPLAY OK!");
 
-  tft_ext.setTextColor(ILI9341_YELLOW);
-  tft_ext.setCursor(50, 160);
-  tft_ext.println("ILI9488 SPI");
+  gfx->setTextSize(3);
+  gfx->setTextColor(GREEN);
+  gfx->setCursor(50, 120);
+  gfx->println("3.5 inch ILI9488");
 
-  // Draw some shapes
-  tft_ext.drawRect(10, 10, 300, 220, ILI9341_CYAN);
-  tft_ext.fillCircle(400, 120, 50, ILI9341_RED);
+  gfx->setTextColor(YELLOW);
+  gfx->setCursor(50, 170);
+  gfx->println("480 x 320 SPI");
 
-  Serial.println("Display initialized!");
+  // Draw shapes
+  gfx->drawRect(10, 10, 460, 300, CYAN);
+  gfx->fillCircle(400, 250, 40, RED);
+
+  Serial.println("Test complete!");
 }
 
 void loop() {
-  // Blink a rectangle to show it's running
+  // Blink indicator
   static bool toggle = false;
   toggle = !toggle;
 
-  if (toggle) {
-    tft_ext.fillRect(420, 200, 50, 30, ILI9341_GREEN);
-  } else {
-    tft_ext.fillRect(420, 200, 50, 30, ILI9341_BLACK);
-  }
-
+  gfx->fillRect(420, 10, 50, 30, toggle ? GREEN : BLACK);
   delay(500);
 }
