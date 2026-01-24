@@ -1,27 +1,26 @@
 // External 3.5" ILI9488 Display Test for Wio Terminal
-// Using Software SPI to avoid conflicts
+// Corrected pin mapping
 
+#include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 
-// Pin definitions
-#define TFT_CS   10
-#define TFT_DC   8
-#define TFT_RST  9
-#define TFT_MOSI 19
-#define TFT_CLK  21
-#define TFT_MISO 22
+// Wio Terminal back header pin mapping:
+// Pin 13 = D2, Pin 15 = D3, Pin 24 = D8
+#define TFT_CS   8   // Pin 24 (SS/D8)
+#define TFT_DC   3   // Pin 15 (D3)
+#define TFT_RST  2   // Pin 13 (D2)
 
-// Use SOFTWARE SPI
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_RST, TFT_MISO);
+// Use hardware SPI (MOSI=Pin19, SCK=Pin23)
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("Display Test - Software SPI");
+  Serial.println("Display Test");
 
   tft.begin();
-  Serial.println("tft.begin() done");
+  Serial.println("begin done");
 
   tft.setRotation(1);
   tft.fillScreen(ILI9341_BLACK);
@@ -32,23 +31,17 @@ void setup() {
   tft.setCursor(30, 50);
   tft.println("HELLO!");
 
-  tft.setTextSize(2);
   tft.setTextColor(ILI9341_GREEN);
+  tft.setTextSize(2);
   tft.setCursor(30, 100);
   tft.println("Display Working!");
 
-  tft.setTextColor(ILI9341_YELLOW);
-  tft.setCursor(30, 140);
-  tft.println("3.5 inch TFT");
-
   tft.drawRect(10, 10, 300, 220, ILI9341_CYAN);
+  tft.fillCircle(280, 180, 30, ILI9341_RED);
 
-  Serial.println("Test complete!");
+  Serial.println("Done!");
 }
 
 void loop() {
-  static bool toggle = false;
-  toggle = !toggle;
-  tft.fillCircle(280, 200, 15, toggle ? ILI9341_RED : ILI9341_BLACK);
-  delay(500);
+  delay(1000);
 }
