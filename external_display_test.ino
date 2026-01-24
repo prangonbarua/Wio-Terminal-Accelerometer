@@ -1,43 +1,45 @@
-// External 3.5" ILI9488 Display Test for Wio Terminal
-// Corrected pin mapping
+// External 3.5" ILI9488 Display Test
+// Using Arduino_GFX with correct ILI9488 driver
 
-#include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_ILI9341.h>
+#include <Arduino_GFX_Library.h>
 
-// Wio Terminal back header pin mapping:
-// Pin 13 = D2, Pin 15 = D3, Pin 24 = D8
-#define TFT_CS   8   // Pin 24 (SS/D8)
-#define TFT_DC   3   // Pin 15 (D3)
-#define TFT_RST  2   // Pin 13 (D2)
+// Wio Terminal GPIO mapping:
+// Header Pin 13 = D2, Pin 15 = D3, Pin 24 = D8
+// Pin 19 = MOSI, Pin 23 = SCK
+#define TFT_CS   8   // Header Pin 24
+#define TFT_DC   3   // Header Pin 15
+#define TFT_RST  2   // Header Pin 13
 
-// Use hardware SPI (MOSI=Pin19, SCK=Pin23)
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
+// Hardware SPI bus + ILI9488 driver
+Arduino_DataBus *bus = new Arduino_HWSPI(TFT_DC, TFT_CS);
+Arduino_GFX *gfx = new Arduino_ILI9488_18bit(bus, TFT_RST, 1, false);
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("Display Test");
+  Serial.println("ILI9488 Display Test");
 
-  tft.begin();
-  Serial.println("begin done");
+  if (!gfx->begin()) {
+    Serial.println("gfx->begin() failed!");
+    while(1) delay(100);
+  }
+  Serial.println("gfx->begin() OK!");
 
-  tft.setRotation(1);
-  tft.fillScreen(ILI9341_BLACK);
+  gfx->fillScreen(BLACK);
   Serial.println("fillScreen done");
 
-  tft.setTextColor(ILI9341_WHITE);
-  tft.setTextSize(3);
-  tft.setCursor(30, 50);
-  tft.println("HELLO!");
+  gfx->setTextColor(WHITE);
+  gfx->setTextSize(4);
+  gfx->setCursor(50, 50);
+  gfx->println("HELLO!");
 
-  tft.setTextColor(ILI9341_GREEN);
-  tft.setTextSize(2);
-  tft.setCursor(30, 100);
-  tft.println("Display Working!");
+  gfx->setTextColor(GREEN);
+  gfx->setTextSize(3);
+  gfx->setCursor(50, 120);
+  gfx->println("ILI9488 Working!");
 
-  tft.drawRect(10, 10, 300, 220, ILI9341_CYAN);
-  tft.fillCircle(280, 180, 30, ILI9341_RED);
+  gfx->drawRect(10, 10, 460, 300, CYAN);
+  gfx->fillCircle(400, 200, 50, RED);
 
   Serial.println("Done!");
 }
