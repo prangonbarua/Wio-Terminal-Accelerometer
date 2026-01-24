@@ -3,6 +3,16 @@
 
 #include <Arduino_GFX_Library.h>
 
+// Define colors (RGB565 format)
+#define BLACK   0x0000
+#define WHITE   0xFFFF
+#define RED     0xF800
+#define GREEN   0x07E0
+#define BLUE    0x001F
+#define CYAN    0x07FF
+#define YELLOW  0xFFE0
+#define MAGENTA 0xF81F
+
 // Pin definitions for external display
 #define TFT_CS   10  // Pin 13 on Wio header
 #define TFT_DC   8   // Pin 17 on Wio header
