@@ -3,6 +3,15 @@
 
 #include <Arduino_GFX_Library.h>
 
+// Colors
+#define BLACK   0x0000
+#define WHITE   0xFFFF
+#define RED     0xF800
+#define GREEN   0x07E0
+#define BLUE    0x001F
+#define CYAN    0x07FF
+#define YELLOW  0xFFE0
+
 // Wio Terminal GPIO mapping:
 // Header Pin 13 = D2, Pin 15 = D3, Pin 24 = D8
 // Pin 19 = MOSI, Pin 23 = SCK
