@@ -5,21 +5,15 @@
 #include <SPI.h>
 #include "ILI9488.h"
 
-// Wio Terminal back header pins
-#define TFT_CS   8   // Header Pin 24
-#define TFT_DC   1   // Header Pin 15
-#define TFT_RST  0   // Header Pin 13
-// MOSI = Pin 19 (hardware SPI1)
-// SCK = Pin 23 (hardware SPI1)
+// CORRECT Wio Terminal back header pin mapping:
+// (From pin_check output)
+#define TFT_CS   87   // PIN_SPI1_SS - Header Pin 24
+#define TFT_DC   1    // BCM22/D1 - Header Pin 15
+#define TFT_RST  0    // BCM27/D0 - Header Pin 13
+#define TFT_MOSI 85   // PIN_SPI1_MOSI - Header Pin 19
+#define TFT_SCLK 86   // PIN_SPI1_SCK - Header Pin 23
 
-// IMPORTANT: The back header uses SPI1, not default SPI
-// We need to manually bit-bang since library uses wrong SPI bus
-
-// Manual software SPI pins
-#define TFT_MOSI  PIN_SPI1_MOSI  // Header Pin 19
-#define TFT_SCLK  PIN_SPI1_SCK   // Header Pin 23
-
-// Use software SPI constructor
+// Use software SPI constructor with CORRECT pin numbers
 ILI9488 tft = ILI9488(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST, -1);
 
 void setup() {
