@@ -22,9 +22,13 @@
 #define TFT_DC   3   // Header Pin 15
 #define TFT_RST  2   // Header Pin 13
 
-// Hardware SPI bus + ILI9488 driver
-// Parameters: DC pin, CS pin
-Arduino_DataBus *bus = new Arduino_HWSPI(TFT_DC, TFT_CS);
+// Software SPI pins (directly controlled)
+#define TFT_MOSI 4   // Header Pin 19 = BCM 10 = Arduino D4
+#define TFT_SCK  7   // Header Pin 23 = BCM 11 = Arduino D7
+
+// Use SOFTWARE SPI for more reliable pin control
+// Parameters: DC, CS, SCK, MOSI, MISO (-1 = not used)
+Arduino_DataBus *bus = new Arduino_SWSPI(TFT_DC, TFT_CS, TFT_SCK, TFT_MOSI, -1);
 // Parameters: bus, reset pin, rotation (0-3), IPS panel (false for standard)
 Arduino_GFX *gfx = new Arduino_ILI9488_18bit(bus, TFT_RST, 0, false);
 
@@ -38,12 +42,12 @@ void setup() {
   Serial.println();
 
   // Print pin configuration
-  Serial.println("Pin Configuration:");
-  Serial.print("  CS  = D"); Serial.println(TFT_CS);
-  Serial.print("  DC  = D"); Serial.println(TFT_DC);
-  Serial.print("  RST = D"); Serial.println(TFT_RST);
-  Serial.println("  MOSI = Hardware SPI (Pin 19)");
-  Serial.println("  SCK  = Hardware SPI (Pin 23)");
+  Serial.println("Pin Configuration (Software SPI):");
+  Serial.print("  CS   = D"); Serial.println(TFT_CS);
+  Serial.print("  DC   = D"); Serial.println(TFT_DC);
+  Serial.print("  RST  = D"); Serial.println(TFT_RST);
+  Serial.print("  MOSI = D"); Serial.println(TFT_MOSI);
+  Serial.print("  SCK  = D"); Serial.println(TFT_SCK);
   Serial.println();
 
   // Manual reset sequence
