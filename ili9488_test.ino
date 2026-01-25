@@ -12,15 +12,22 @@
 // MOSI = Pin 19 (hardware SPI1)
 // SCK = Pin 23 (hardware SPI1)
 
-// Create display object
-ILI9488 tft = ILI9488(TFT_CS, TFT_DC, TFT_RST);
+// IMPORTANT: The back header uses SPI1, not default SPI
+// We need to manually bit-bang since library uses wrong SPI bus
+
+// Manual software SPI pins
+#define TFT_MOSI  PIN_SPI1_MOSI  // Header Pin 19
+#define TFT_SCLK  PIN_SPI1_SCK   // Header Pin 23
+
+// Use software SPI constructor
+ILI9488 tft = ILI9488(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST, -1);
 
 void setup() {
   Serial.begin(115200);
   delay(2000);
 
   Serial.println("=====================================");
-  Serial.println("ILI9488 Test - Jaret Burkett Library");
+  Serial.println("ILI9488 Test - Software SPI Mode");
   Serial.println("=====================================");
   Serial.println();
 
@@ -35,7 +42,7 @@ void setup() {
   Serial.println("  LED  -> Pin 2 or 4 (5V)");
   Serial.println();
 
-  Serial.println("Initializing display...");
+  Serial.println("Initializing display (software SPI)...");
   tft.begin();
   Serial.println("Display initialized!");
 
