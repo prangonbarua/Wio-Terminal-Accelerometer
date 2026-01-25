@@ -24,12 +24,11 @@
 #define TFT_DC   1   // Header Pin 15 (BCM22 = D1)
 #define TFT_RST  0   // Header Pin 13 (BCM27 = D0)
 
-// Try SOFTWARE SPI for debugging - explicit pin control
-// We need to find which Arduino pins map to Header Pin 19 (MOSI) and Pin 23 (SCK)
-// According to Wio Terminal docs: these are SPI1 pins
-// Let's use the SPI1 pin definitions directly
-#define TFT_MOSI PIN_SPI1_MOSI  // Header Pin 19
-#define TFT_SCK  PIN_SPI1_SCK   // Header Pin 23
+// Use regular GPIO pins instead of dedicated SPI pins
+// Header Pin 16 (BCM23) = D2
+// Header Pin 18 (BCM24) = D3
+#define TFT_MOSI 2   // Header Pin 16 (BCM23 = D2)
+#define TFT_SCK  3   // Header Pin 18 (BCM24 = D3)
 
 // Software SPI - manually bit-bang the data
 Arduino_DataBus *bus = new Arduino_SWSPI(TFT_DC, TFT_CS, TFT_SCK, TFT_MOSI, -1);
