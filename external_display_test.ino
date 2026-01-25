@@ -15,12 +15,14 @@
 #define YELLOW  0xFFE0
 #define MAGENTA 0xF81F
 
-// Wio Terminal GPIO mapping:
-// Header Pin 13 = D2, Pin 15 = D3, Pin 24 = D8
-// Pin 19 = MOSI, Pin 23 = SCK
+// Wio Terminal GPIO mapping (CORRECTED):
+// Header Pin 13 (BCM27) = D0
+// Header Pin 15 (BCM22) = D1
+// Header Pin 24 (CE0) = D8 / SPI1 SS
+// Pin 19 = SPI1 MOSI, Pin 23 = SPI1 SCK
 #define TFT_CS   8   // Header Pin 24
-#define TFT_DC   3   // Header Pin 15
-#define TFT_RST  2   // Header Pin 13
+#define TFT_DC   1   // Header Pin 15 (BCM22 = D1)
+#define TFT_RST  0   // Header Pin 13 (BCM27 = D0)
 
 // Wio Terminal back header uses SPI1 bus (not SPI0 which is for internal LCD)
 // Use Hardware SPI1 for the external display
