@@ -24,34 +24,32 @@
 #define TFT_DC   1   // Header Pin 15 (BCM22 = D1)
 #define TFT_RST  0   // Header Pin 13 (BCM27 = D0)
 
-// Use regular GPIO pins instead of dedicated SPI pins
-// Header Pin 16 (BCM23) = D2
-// Header Pin 18 (BCM24) = D3
-#define TFT_MOSI 2   // Header Pin 16 (BCM23 = D2)
-#define TFT_SCK  3   // Header Pin 18 (BCM24 = D3)
+// Hardware SPI1 pins on Wio Terminal back header
+// Pin 19 = SPI1 MOSI
+// Pin 23 = SPI1 SCK
 
-// Software SPI - manually bit-bang the data
-Arduino_DataBus *bus = new Arduino_SWSPI(TFT_DC, TFT_CS, TFT_SCK, TFT_MOSI, -1);
+// Use Hardware SPI1 for better performance
+Arduino_DataBus *bus = new Arduino_HWSPI(TFT_DC, TFT_CS, &SPI1);
 
-// Try ILI9486 - VERY common on Amazon 3.5" displays
-Arduino_GFX *gfx = new Arduino_ILI9486(bus, TFT_RST, 0, true);
+// ILI9488 18-bit driver (confirmed ILI9488 chip)
+Arduino_GFX *gfx = new Arduino_ILI9488_18bit(bus, TFT_RST, 0, false);
 
 void setup() {
   Serial.begin(115200);
   delay(2000);  // Wait for serial
 
   Serial.println("=====================================");
-  Serial.println("ILI9486 3.5\" Display Test");
+  Serial.println("ILI9488 3.5\" Display Test (Hardware SPI1)");
   Serial.println("=====================================");
   Serial.println();
 
   // Print pin configuration
-  Serial.println("Pin Configuration (Software SPI):");
-  Serial.print("  CS   = "); Serial.println(TFT_CS);
-  Serial.print("  DC   = "); Serial.println(TFT_DC);
-  Serial.print("  RST  = "); Serial.println(TFT_RST);
-  Serial.print("  MOSI = "); Serial.print(TFT_MOSI); Serial.println(" (PIN_SPI1_MOSI)");
-  Serial.print("  SCK  = "); Serial.print(TFT_SCK); Serial.println(" (PIN_SPI1_SCK)");
+  Serial.println("Pin Configuration (Hardware SPI1):");
+  Serial.print("  CS   = D"); Serial.print(TFT_CS); Serial.println(" (Header Pin 24)");
+  Serial.print("  DC   = D"); Serial.print(TFT_DC); Serial.println(" (Header Pin 15)");
+  Serial.print("  RST  = D"); Serial.print(TFT_RST); Serial.println(" (Header Pin 13)");
+  Serial.println("  MOSI = Header Pin 19 (SPI1 MOSI)");
+  Serial.println("  SCK  = Header Pin 23 (SPI1 SCK)");
   Serial.println();
 
   // Manual reset sequence
