@@ -25,10 +25,10 @@
 #define TFT_DC   BCM22         // 1  - Header Pin 15
 #define TFT_RST  BCM27         // 0  - Header Pin 13
 
-// Use Hardware SPI1 (MOSI=Pin19, SCK=Pin23 handled automatically)
-Arduino_DataBus *bus = new Arduino_HWSPI(TFT_DC, TFT_CS, &SPI1);
+// Use Hardware SPI1 with SLOWER speed (some displays need this)
+Arduino_DataBus *bus = new Arduino_HWSPI(TFT_DC, TFT_CS, &SPI1, 8000000);  // 8MHz instead of default
 
-// ILI9488 18-bit driver - try with IPS=true
+// ILI9488 18-bit driver
 Arduino_GFX *gfx = new Arduino_ILI9488_18bit(bus, TFT_RST, 0, true);
 
 void setup() {
