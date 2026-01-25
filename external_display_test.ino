@@ -33,15 +33,15 @@
 // Software SPI - manually bit-bang the data
 Arduino_DataBus *bus = new Arduino_SWSPI(TFT_DC, TFT_CS, TFT_SCK, TFT_MOSI, -1);
 
-// Try ST7796 driver instead - common on Amazon 3.5" displays
-Arduino_GFX *gfx = new Arduino_ST7796(bus, TFT_RST, 0, true);
+// Try ILI9486 - VERY common on Amazon 3.5" displays
+Arduino_GFX *gfx = new Arduino_ILI9486(bus, TFT_RST, 0, true);
 
 void setup() {
   Serial.begin(115200);
   delay(2000);  // Wait for serial
 
   Serial.println("=====================================");
-  Serial.println("ILI9488 3.5\" Display Test");
+  Serial.println("ILI9486 3.5\" Display Test");
   Serial.println("=====================================");
   Serial.println();
 
