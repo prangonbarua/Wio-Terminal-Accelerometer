@@ -33,8 +33,8 @@
 // Software SPI - manually bit-bang the data
 Arduino_DataBus *bus = new Arduino_SWSPI(TFT_DC, TFT_CS, TFT_SCK, TFT_MOSI, -1);
 
-// ILI9488 18-bit driver - try with IPS=true
-Arduino_GFX *gfx = new Arduino_ILI9488_18bit(bus, TFT_RST, 0, true);
+// Try ST7796 driver instead - common on Amazon 3.5" displays
+Arduino_GFX *gfx = new Arduino_ST7796(bus, TFT_RST, 0, true);
 
 void setup() {
   Serial.begin(115200);
