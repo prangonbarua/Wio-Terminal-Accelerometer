@@ -24,9 +24,15 @@
 #define TFT_DC   1   // Header Pin 15 (BCM22 = D1)
 #define TFT_RST  0   // Header Pin 13 (BCM27 = D0)
 
-// Wio Terminal back header uses SPI1 bus (not SPI0 which is for internal LCD)
-// Use Hardware SPI1 for the external display
-Arduino_DataBus *bus = new Arduino_HWSPI(TFT_DC, TFT_CS, &SPI1);
+// Try SOFTWARE SPI for debugging - explicit pin control
+// We need to find which Arduino pins map to Header Pin 19 (MOSI) and Pin 23 (SCK)
+// According to Wio Terminal docs: these are SPI1 pins
+// Let's use the SPI1 pin definitions directly
+#define TFT_MOSI PIN_SPI1_MOSI  // Header Pin 19
+#define TFT_SCK  PIN_SPI1_SCK   // Header Pin 23
+
+// Software SPI - manually bit-bang the data
+Arduino_DataBus *bus = new Arduino_SWSPI(TFT_DC, TFT_CS, TFT_SCK, TFT_MOSI, -1);
 // Parameters: bus, reset pin, rotation (0-3), IPS panel (false for standard)
 Arduino_GFX *gfx = new Arduino_ILI9488_18bit(bus, TFT_RST, 0, false);
 
@@ -40,12 +46,12 @@ void setup() {
   Serial.println();
 
   // Print pin configuration
-  Serial.println("Pin Configuration (Hardware SPI1):");
-  Serial.print("  CS  = D"); Serial.println(TFT_CS);
-  Serial.print("  DC  = D"); Serial.println(TFT_DC);
-  Serial.print("  RST = D"); Serial.println(TFT_RST);
-  Serial.println("  MOSI = SPI1 MOSI (Header Pin 19)");
-  Serial.println("  SCK  = SPI1 SCK (Header Pin 23)");
+  Serial.println("Pin Configuration (Software SPI):");
+  Serial.print("  CS   = "); Serial.println(TFT_CS);
+  Serial.print("  DC   = "); Serial.println(TFT_DC);
+  Serial.print("  RST  = "); Serial.println(TFT_RST);
+  Serial.print("  MOSI = "); Serial.print(TFT_MOSI); Serial.println(" (PIN_SPI1_MOSI)");
+  Serial.print("  SCK  = "); Serial.print(TFT_SCK); Serial.println(" (PIN_SPI1_SCK)");
   Serial.println();
 
   // Manual reset sequence
