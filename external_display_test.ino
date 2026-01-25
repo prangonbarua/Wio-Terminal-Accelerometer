@@ -15,23 +15,18 @@
 #define YELLOW  0xFFE0
 #define MAGENTA 0xF81F
 
-// Wio Terminal GPIO mapping (CORRECTED):
-// Header Pin 13 (BCM27) = D0
-// Header Pin 15 (BCM22) = D1
-// Header Pin 24 (CE0) = D8 / SPI1 SS
-// Pin 19 = SPI1 MOSI, Pin 23 = SPI1 SCK
-#define TFT_CS   8   // Header Pin 24
-#define TFT_DC   1   // Header Pin 15 (BCM22 = D1)
-#define TFT_RST  0   // Header Pin 13 (BCM27 = D0)
+// CORRECT pin mapping (from pin_check):
+// PIN_SPI1_SS = 87, PIN_SPI1_MOSI = 85, PIN_SPI1_SCK = 86
+#define TFT_CS   87   // Header Pin 24 (PIN_SPI1_SS)
+#define TFT_DC   1    // Header Pin 15 (BCM22)
+#define TFT_RST  0    // Header Pin 13 (BCM27)
+#define TFT_MOSI 85   // Header Pin 19 (PIN_SPI1_MOSI)
+#define TFT_SCK  86   // Header Pin 23 (PIN_SPI1_SCK)
 
-// Hardware SPI1 pins on Wio Terminal back header
-// Pin 19 = SPI1 MOSI
-// Pin 23 = SPI1 SCK
+// Use Software SPI with correct pin numbers
+Arduino_DataBus *bus = new Arduino_SWSPI(TFT_DC, TFT_CS, TFT_SCK, TFT_MOSI, -1);
 
-// Use Hardware SPI1 for better performance
-Arduino_DataBus *bus = new Arduino_HWSPI(TFT_DC, TFT_CS, &SPI1);
-
-// ILI9488 18-bit driver (confirmed ILI9488 chip)
+// ILI9488 18-bit driver
 Arduino_GFX *gfx = new Arduino_ILI9488_18bit(bus, TFT_RST, 0, false);
 
 void setup() {
