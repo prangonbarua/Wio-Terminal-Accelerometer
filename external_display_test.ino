@@ -33,8 +33,9 @@
 
 // Software SPI - manually bit-bang the data
 Arduino_DataBus *bus = new Arduino_SWSPI(TFT_DC, TFT_CS, TFT_SCK, TFT_MOSI, -1);
-// Parameters: bus, reset pin, rotation (0-3), IPS panel (false for standard)
-Arduino_GFX *gfx = new Arduino_ILI9488_18bit(bus, TFT_RST, 0, false);
+
+// ILI9488 18-bit driver - try with IPS=true
+Arduino_GFX *gfx = new Arduino_ILI9488_18bit(bus, TFT_RST, 0, true);
 
 void setup() {
   Serial.begin(115200);
@@ -80,17 +81,21 @@ void setup() {
   // Clear screen with different colors to test
   Serial.println("Testing colors...");
 
-  Serial.println("  Filling RED...");
+  Serial.println("  Filling RED... (2 sec)");
   gfx->fillScreen(RED);
-  delay(500);
+  delay(2000);
 
-  Serial.println("  Filling GREEN...");
+  Serial.println("  Filling GREEN... (2 sec)");
   gfx->fillScreen(GREEN);
-  delay(500);
+  delay(2000);
 
-  Serial.println("  Filling BLUE...");
+  Serial.println("  Filling BLUE... (2 sec)");
   gfx->fillScreen(BLUE);
-  delay(500);
+  delay(2000);
+
+  Serial.println("  Filling WHITE... (2 sec)");
+  gfx->fillScreen(WHITE);
+  delay(2000);
 
   Serial.println("  Filling BLACK...");
   gfx->fillScreen(BLACK);
