@@ -15,19 +15,21 @@
 #define YELLOW  0xFFE0
 #define MAGENTA 0xF81F
 
-// CORRECT pin mapping (from pin_check):
-// PIN_SPI1_SS = 87, PIN_SPI1_MOSI = 85, PIN_SPI1_SCK = 86
-#define TFT_CS   87   // Header Pin 24 (PIN_SPI1_SS)
-#define TFT_DC   1    // Header Pin 15 (BCM22)
-#define TFT_RST  0    // Header Pin 13 (BCM27)
-#define TFT_MOSI 85   // Header Pin 19 (PIN_SPI1_MOSI)
-#define TFT_SCK  86   // Header Pin 23 (PIN_SPI1_SCK)
+// Pin mapping for Wio Terminal back header:
+// CS on Pin 24 = PIN_SPI1_SS = 87
+// DC on Pin 15 = BCM22 = 1
+// RST on Pin 13 = BCM27 = 0
+// MOSI/SCK handled by hardware SPI1
 
-// Use Software SPI with correct pin numbers
-Arduino_DataBus *bus = new Arduino_SWSPI(TFT_DC, TFT_CS, TFT_SCK, TFT_MOSI, -1);
+#define TFT_CS   PIN_SPI1_SS   // 87 - Header Pin 24
+#define TFT_DC   BCM22         // 1  - Header Pin 15
+#define TFT_RST  BCM27         // 0  - Header Pin 13
 
-// ILI9488 18-bit driver
-Arduino_GFX *gfx = new Arduino_ILI9488_18bit(bus, TFT_RST, 0, false);
+// Use Hardware SPI1 (MOSI=Pin19, SCK=Pin23 handled automatically)
+Arduino_DataBus *bus = new Arduino_HWSPI(TFT_DC, TFT_CS, &SPI1);
+
+// ILI9488 18-bit driver - try with IPS=true
+Arduino_GFX *gfx = new Arduino_ILI9488_18bit(bus, TFT_RST, 0, true);
 
 void setup() {
   Serial.begin(115200);
