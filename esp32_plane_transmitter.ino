@@ -16,13 +16,14 @@ const int UDP_PORT = 4210;
 const int BROADCAST_INTERVAL = 100;  // 10Hz update rate
 // ============================================
 
-// GPS on Serial2 (default ESP32 pins: RX=16, TX=17)
-// Change these if using different pins
-#define GPS_RX 16
-#define GPS_TX 17
+// GPS Serial pins
+// ESP32-C3: Use GPIO 20 (RX) and GPIO 21 (TX)
+// Regular ESP32: Use GPIO 16 (RX) and GPIO 17 (TX)
+#define GPS_RX 20  // ESP32-C3: GPIO 20, Regular ESP32: GPIO 16
+#define GPS_TX 21  // ESP32-C3: GPIO 21, Regular ESP32: GPIO 17
 
 TinyGPSPlus gps;
-HardwareSerial gpsSerial(2);
+HardwareSerial gpsSerial(1);  // Use Serial1 for ESP32-C3
 WiFiUDP udp;
 
 // Flight data
