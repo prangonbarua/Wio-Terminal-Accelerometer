@@ -62,9 +62,11 @@ void setup() {
 }
 
 void loop() {
-  // Read GPS data
+  // Read GPS data and print raw data for debugging
   while (Serial1.available() > 0) {
-    gps.encode(Serial1.read());
+    char c = Serial1.read();
+    Serial.print(c);  // Print raw GPS data to Serial Monitor
+    gps.encode(c);
   }
 
   // Check button - reset peak
