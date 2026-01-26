@@ -1,5 +1,5 @@
-// Simple GPS Speedometer for Wio Terminal
-// No SD card required - just displays speed on screen
+// GPS Speedometer for Wio Terminal
+// With Peak, Average, Trip distance tracking
 // NEO-6M GPS on Serial1 (back header pins 8/10)
 
 #include "TFT_eSPI.h"
@@ -11,6 +11,9 @@ TinyGPSPlus gps;
 // Speed tracking (MPH)
 float currentSpeed = 0.0;
 float peakSpeed = 0.0;
+float avgSpeed = 0.0;
+float totalSpeed = 0.0;
+int speedReadings = 0;
 
 // GPS data
 int satellites = 0;
@@ -19,8 +22,15 @@ double longitude = 0.0;
 double altitude = 0.0;
 bool gpsValid = false;
 
+// Trip data
+float tripDistance = 0.0;  // miles
+double lastLat = 0.0;
+double lastLon = 0.0;
+bool tripStarted = false;
+
 // Button pins
 const int BUTTON_MID = WIO_KEY_B;    // Reset peak
+const int BUTTON_BOT = WIO_KEY_C;    // Reset trip
 
 // Timing
 unsigned long lastUpdate = 0;
@@ -31,10 +41,11 @@ void setup() {
   Serial1.begin(9600);  // GPS on Serial1
   delay(1000);
 
-  Serial.println("=== Simple GPS Speedometer ===");
+  Serial.println("=== GPS Speedometer ===");
 
-  // Setup button
+  // Setup buttons
   pinMode(BUTTON_MID, INPUT_PULLUP);
+  pinMode(BUTTON_BOT, INPUT_PULLUP);
 
   // Turn on backlight
   pinMode(72, OUTPUT);
@@ -62,19 +73,28 @@ void setup() {
 }
 
 void loop() {
-  // Read GPS data and print raw data for debugging
+  // Read GPS data
   while (Serial1.available() > 0) {
-    char c = Serial1.read();
-    Serial.print(c);  // Print raw GPS data to Serial Monitor
-    gps.encode(c);
+    gps.encode(Serial1.read());
   }
 
-  // Check button - reset peak
+  // Check buttons
   if (digitalRead(BUTTON_MID) == LOW) {
     delay(200);
     peakSpeed = 0.0;
-    Serial.println("Peak reset");
+    avgSpeed = 0.0;
+    totalSpeed = 0.0;
+    speedReadings = 0;
+    Serial.println("Peak/Avg reset");
     while (digitalRead(BUTTON_MID) == LOW);
+  }
+
+  if (digitalRead(BUTTON_BOT) == LOW) {
+    delay(200);
+    tripDistance = 0.0;
+    tripStarted = false;
+    Serial.println("Trip reset");
+    while (digitalRead(BUTTON_BOT) == LOW);
   }
 
   // Update display
@@ -97,10 +117,30 @@ void updateGPSData() {
 
     if (gps.speed.isValid()) {
       currentSpeed = gps.speed.mph();
+
+      // Update peak
       if (currentSpeed > peakSpeed) {
         peakSpeed = currentSpeed;
       }
+
+      // Update average (only when moving)
+      if (currentSpeed > 0.5) {
+        totalSpeed += currentSpeed;
+        speedReadings++;
+        avgSpeed = totalSpeed / speedReadings;
+      }
     }
+
+    // Calculate trip distance
+    if (tripStarted && lastLat != 0.0) {
+      double dist = gps.distanceBetween(lastLat, lastLon, latitude, longitude);
+      tripDistance += dist / 1609.34;  // Convert meters to miles
+    }
+
+    lastLat = latitude;
+    lastLon = longitude;
+    tripStarted = true;
+
   } else {
     gpsValid = false;
   }
@@ -130,7 +170,7 @@ void drawScreen() {
   int speedX = 100;
   if (currentSpeed >= 100) speedX = 40;
   else if (currentSpeed >= 10) speedX = 70;
-  tft.setCursor(speedX, 40);
+  tft.setCursor(speedX, 25);
 
   // Color based on speed
   if (currentSpeed < 30) {
@@ -146,43 +186,57 @@ void drawScreen() {
   // MPH label
   tft.setTextSize(3);
   tft.setTextColor(TFT_WHITE);
-  tft.setCursor(230, 60);
+  tft.setCursor(230, 50);
   tft.print("MPH");
 
   // Altitude
   tft.setTextSize(2);
   tft.setTextColor(TFT_ORANGE);
-  tft.setCursor(180, 95);
+  tft.setCursor(180, 80);
   tft.print(altitude * 3.28084, 0);
   tft.print(" ft");
 
   // Divider
-  tft.drawLine(10, 120, 310, 120, TFT_DARKGREY);
+  tft.drawLine(10, 100, 310, 100, TFT_DARKGREY);
 
   // Peak speed
   tft.setTextSize(2);
   tft.setTextColor(TFT_YELLOW);
-  tft.setCursor(10, 130);
+  tft.setCursor(10, 108);
   tft.print("Peak: ");
   tft.setTextColor(TFT_RED);
   tft.print(peakSpeed, 1);
   tft.print(" MPH");
 
-  // Coordinates
+  // Average speed
+  tft.setTextColor(TFT_CYAN);
+  tft.setCursor(10, 133);
+  tft.print("Avg:  ");
+  tft.print(avgSpeed, 1);
+  tft.print(" MPH");
+
+  // Trip distance
+  tft.setTextColor(TFT_MAGENTA);
+  tft.setCursor(10, 158);
+  tft.print("Trip: ");
+  tft.print(tripDistance, 2);
+  tft.print(" mi");
+
+  // GPS coordinates (small)
   if (gpsValid) {
     tft.setTextSize(1);
     tft.setTextColor(TFT_DARKGREY);
-    tft.setCursor(10, 160);
+    tft.setCursor(170, 110);
     tft.print("LAT: ");
-    tft.print(latitude, 6);
-    tft.setCursor(10, 175);
+    tft.print(latitude, 5);
+    tft.setCursor(170, 122);
     tft.print("LON: ");
-    tft.print(longitude, 6);
+    tft.print(longitude, 5);
   }
 
-  // Button hint
+  // Button hints
   tft.setTextSize(1);
   tft.setTextColor(TFT_WHITE);
-  tft.setCursor(10, 210);
-  tft.print("[B] Reset Peak Speed");
+  tft.setCursor(5, 190);
+  tft.print("[B] Reset Peak/Avg    [C] Reset Trip");
 }
