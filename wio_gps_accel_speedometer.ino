@@ -55,8 +55,8 @@ void setup() {
   pinMode(BUTTON_BOT, INPUT_PULLUP);
 
   // Turn on backlight
-  pinMode(72, OUTPUT);
-  digitalWrite(72, HIGH);
+  pinMode(LCD_BACKLIGHT, OUTPUT);
+  digitalWrite(LCD_BACKLIGHT, HIGH);
 
   // Initialize display
   tft.init();
