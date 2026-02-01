@@ -42,7 +42,7 @@ unsigned long lastUpdate = 0;
 
 void setup() {
   Serial.begin(115200);
-  Serial1.begin(9600);  // Standard NEO-6M default baud rate
+  Serial1.begin(115200);  // GPS baud rate
 
   pinMode(BTN_A, INPUT_PULLUP);
   pinMode(BTN_B, INPUT_PULLUP);
