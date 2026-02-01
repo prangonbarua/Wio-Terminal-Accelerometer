@@ -42,7 +42,7 @@ unsigned long lastUpdate = 0;
 
 void setup() {
   Serial.begin(115200);
-  Serial1.begin(9600);
+  Serial1.begin(38400);  // Try 38400 if 9600 doesn't work
 
   pinMode(BTN_A, INPUT_PULLUP);
   pinMode(BTN_B, INPUT_PULLUP);
