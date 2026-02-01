@@ -42,7 +42,7 @@ unsigned long lastUpdate = 0;
 
 void setup() {
   Serial.begin(115200);
-  Serial1.begin(9600);  // NEO-6M default
+  Serial1.begin(4800);  // Try 4800
 
   pinMode(BTN_A, INPUT_PULLUP);
   pinMode(BTN_B, INPUT_PULLUP);
