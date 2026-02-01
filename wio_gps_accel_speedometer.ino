@@ -118,7 +118,9 @@ void setup() {
 void loop() {
   // Read GPS data
   while (Serial1.available() > 0) {
-    gps.encode(Serial1.read());
+    char c = Serial1.read();
+    Serial.print(c);  // Debug: show raw GPS data
+    gps.encode(c);
   }
 
   // Check buttons
