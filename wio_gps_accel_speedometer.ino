@@ -44,7 +44,7 @@ const int UPDATE_INTERVAL = 100;  // 10Hz
 
 void setup() {
   Serial.begin(115200);
-  Serial1.begin(57600);  // GPS on Serial1
+  Serial1.begin(9600);  // GPS on Serial1
   delay(1000);
 
   Serial.println("=== GPS + Accelerometer Speedometer ===");
