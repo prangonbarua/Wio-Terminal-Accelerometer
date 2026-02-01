@@ -1,6 +1,11 @@
 // GPS + Accelerometer Speedometer for Wio Terminal
-// Uses NEO-6M GPS on Serial1 (Pins 8/10) + Built-in Accelerometer
-// Displays both GPS speed and G-force
+// Uses NEO-6M GPS on Serial1 + Built-in Accelerometer
+//
+// WIRING (NEO-6M GPS):
+//   GPS VCC -> Wio 3.3V or 5V
+//   GPS GND -> Wio GND
+//   GPS TXD -> Wio Pin 10 (Serial1 RX)
+//   GPS RXD -> Wio Pin 8 (Serial1 TX) - optional
 
 #include <LIS3DHTR.h>
 #include "TFT_eSPI.h"
