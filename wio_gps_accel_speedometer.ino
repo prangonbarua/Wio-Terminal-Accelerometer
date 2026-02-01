@@ -42,7 +42,7 @@ unsigned long lastUpdate = 0;
 
 void setup() {
   Serial.begin(115200);
-  Serial1.begin(38400);  // Try 38400 if 9600 doesn't work
+  Serial1.begin(9600);  // NEO-6M default
 
   pinMode(BTN_A, INPUT_PULLUP);
   pinMode(BTN_B, INPUT_PULLUP);
@@ -87,10 +87,11 @@ void setup() {
 }
 
 void loop() {
-  // Read GPS - count chars received
+  // Read GPS - count chars received and print raw data
   while (Serial1.available() > 0) {
     char c = Serial1.read();
     gpsCharsReceived++;
+    Serial.print(c);  // Print raw GPS data to Serial Monitor
     gps.encode(c);
   }
 
