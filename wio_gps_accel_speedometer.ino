@@ -95,25 +95,36 @@ void setup() {
 }
 
 void loop() {
-  // Read GPS - show hex for first 100 bytes to diagnose signal issues
+  // Read GPS with software bit inversion (for inverted signal GPS modules)
   while (Serial1.available() > 0) {
-    char c = Serial1.read();
+    uint8_t raw = Serial1.read();
+
+    // Invert the byte to fix inverted serial signal
+    char c = (char)(~raw);  // Bit inversion: 0xFF XOR raw
+
     gpsCharsReceived++;
 
-    // Show hex for first 100 bytes to diagnose
+    // Show first 100 bytes (both raw and inverted) to verify fix
     if (gpsCharsReceived <= 100) {
-      Serial.print("0x");
-      if ((uint8_t)c < 16) Serial.print("0");
-      Serial.print((uint8_t)c, HEX);
-      Serial.print(" ");
-      if (gpsCharsReceived % 16 == 0) Serial.println();
+      Serial.print("Raw:0x");
+      if (raw < 16) Serial.print("0");
+      Serial.print(raw, HEX);
+      Serial.print(" Inv:0x");
+      uint8_t inv = (uint8_t)c;
+      if (inv < 16) Serial.print("0");
+      Serial.print(inv, HEX);
+      if (c >= 32 && c <= 126) {
+        Serial.print(" '");
+        Serial.print(c);
+        Serial.print("'");
+      }
+      Serial.println();
       if (gpsCharsReceived == 100) {
-        Serial.println("\n--- Switching to ASCII mode ---");
-        Serial.println("Look for: $GPGGA, $GPRMC, $GPVTG");
-        Serial.println("If still garbage, try swapping TX/RX wires!\n");
+        Serial.println("\n--- Now showing inverted ASCII ---");
+        Serial.println("Looking for: $GPGGA, $GPRMC, $GPVTG\n");
       }
     } else {
-      Serial.print(c);  // Print raw GPS data
+      Serial.print(c);  // Print inverted GPS data
     }
     gps.encode(c);
   }
