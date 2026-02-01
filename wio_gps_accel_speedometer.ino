@@ -80,52 +80,18 @@ void setup() {
 
   tft.setTextColor(TFT_YELLOW);
   tft.setCursor(40, 120);
-  tft.print("Baud: 9600 (standard)");
-  tft.setCursor(40, 140);
   tft.print("Waiting for GPS...");
-
-  Serial.println("\n=== GPS DEBUG MODE ===");
-  Serial.println("Baud: 9600");
-  Serial.println("Look for $GP sentences below:");
-  Serial.println("If garbage: try swapping TX/RX wires");
-  Serial.println("========================\n");
 
   delay(2000);
   tft.fillScreen(TFT_BLACK);
 }
 
 void loop() {
-  // Read GPS with software bit inversion (for inverted signal GPS modules)
+  // Read GPS data
   while (Serial1.available() > 0) {
-    uint8_t raw = Serial1.read();
-
-    // Invert the byte to fix inverted serial signal
-    char c = (char)(~raw);  // Bit inversion: 0xFF XOR raw
-
+    char c = Serial1.read();
     gpsCharsReceived++;
-
-    // Show first 100 bytes (both raw and inverted) to verify fix
-    if (gpsCharsReceived <= 100) {
-      Serial.print("Raw:0x");
-      if (raw < 16) Serial.print("0");
-      Serial.print(raw, HEX);
-      Serial.print(" Inv:0x");
-      uint8_t inv = (uint8_t)c;
-      if (inv < 16) Serial.print("0");
-      Serial.print(inv, HEX);
-      if (c >= 32 && c <= 126) {
-        Serial.print(" '");
-        Serial.print(c);
-        Serial.print("'");
-      }
-      Serial.println();
-      if (gpsCharsReceived == 100) {
-        Serial.println("\n--- Now showing inverted ASCII ---");
-        Serial.println("Looking for: $GPGGA, $GPRMC, $GPVTG\n");
-      }
-    } else {
-      Serial.print(c);  // Print inverted GPS data
-    }
+    Serial.print(c);  // Print to Serial Monitor for debugging
     gps.encode(c);
   }
 
