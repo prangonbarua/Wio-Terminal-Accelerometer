@@ -42,7 +42,7 @@ unsigned long lastUpdate = 0;
 
 void setup() {
   Serial.begin(115200);
-  Serial1.begin(57600);  // Try 57600
+  Serial1.begin(9600);  // Standard NEO-6M default baud rate
 
   pinMode(BTN_A, INPUT_PULLUP);
   pinMode(BTN_B, INPUT_PULLUP);
@@ -80,18 +80,41 @@ void setup() {
 
   tft.setTextColor(TFT_YELLOW);
   tft.setCursor(40, 120);
-  tft.print("Waiting for GPS data...");
+  tft.print("Baud: 9600 (standard)");
+  tft.setCursor(40, 140);
+  tft.print("Waiting for GPS...");
+
+  Serial.println("\n=== GPS DEBUG MODE ===");
+  Serial.println("Baud: 9600");
+  Serial.println("Look for $GP sentences below:");
+  Serial.println("If garbage: try swapping TX/RX wires");
+  Serial.println("========================\n");
 
   delay(2000);
   tft.fillScreen(TFT_BLACK);
 }
 
 void loop() {
-  // Read GPS - count chars received and print raw data
+  // Read GPS - show hex for first 100 bytes to diagnose signal issues
   while (Serial1.available() > 0) {
     char c = Serial1.read();
     gpsCharsReceived++;
-    Serial.print(c);  // Print raw GPS data to Serial Monitor
+
+    // Show hex for first 100 bytes to diagnose
+    if (gpsCharsReceived <= 100) {
+      Serial.print("0x");
+      if ((uint8_t)c < 16) Serial.print("0");
+      Serial.print((uint8_t)c, HEX);
+      Serial.print(" ");
+      if (gpsCharsReceived % 16 == 0) Serial.println();
+      if (gpsCharsReceived == 100) {
+        Serial.println("\n--- Switching to ASCII mode ---");
+        Serial.println("Look for: $GPGGA, $GPRMC, $GPVTG");
+        Serial.println("If still garbage, try swapping TX/RX wires!\n");
+      }
+    } else {
+      Serial.print(c);  // Print raw GPS data
+    }
     gps.encode(c);
   }
 
